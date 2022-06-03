@@ -1,7 +1,6 @@
 # This is a sample Python script.
 import cv2
 import numpy as np
-import colour_palette
 
 
 def nothing(pos):
@@ -69,14 +68,16 @@ if __name__ == '__main__':
     print("--A factor of 0.1 is recommended--")
     res_fac = float(input("put resolution factor here: "))
 
+    frame = True
     first_frame = True
     n_frames = 0
-    while n_frames < 10:
+    while True:
         n_frames += 1
 
         # reads the next frame
         isTrue, frame = vid.read()
-
+        if frame is None:
+            break
         # calculates resolutions of both the frames that are shown and the one where the motion tracking happens
         calc_res = (int(frame.shape[1] * res_fac), int(frame.shape[0] * res_fac))
         shown_res = (int(500 * frame.shape[1] / frame.shape[0]), 500)
@@ -95,7 +96,6 @@ if __name__ == '__main__':
         # if so, tracks each pixel to see if it's in the required range
         # then takes an average of the pixels that satisfy and makes it the new pixel colour to track
         if not first_frame:
-
             # list of approved pixels
             range_pix = []
 
@@ -117,7 +117,10 @@ if __name__ == '__main__':
             # then stores the pixel, and it's colour
             for pix in range_pix:
                 x_tot, y_tot = x_tot + pix[0], y_tot + pix[1]
-            main_pix = (x_tot / len(range_pix), y_tot / len(range_pix))
+            try:
+                main_pix = (x_tot / len(range_pix), y_tot / len(range_pix))
+            except:
+                print("--Warning: no pixels approved--")
             main_colour = store_colour(frame, int(main_pix[0]), int(main_pix[1]))
 
             # colours all pixels in range_pix so that the user can check if anything goes wrong
