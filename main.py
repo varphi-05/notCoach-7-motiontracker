@@ -124,13 +124,19 @@ if __name__ == '__main__':
                 # list of approved pixels
                 approved_pix = fc.checkframe(*calc_range, frame, main_colour, dx)
             x_tot, y_tot = 0, 0
-
+            r_tot, g_tot, b_tot = 0,0,0
             # calculates the center of gravity of all points in approved_pix
-            # then stores the pixel, and it's colour
+            # then stores the pixel
+            # does the same thing with colour, calculates the average r, g and b value of all points in approved_pix
+            # the stores that colour
             for pix in approved_pix:
                 x_tot, y_tot = x_tot + pix[0], y_tot + pix[1]
+                r_tot, g_tot, b_tot = r_tot + store_colour(frame, *pix)[0],\
+                                      g_tot + store_colour(frame, *pix)[1],\
+                                      b_tot + store_colour(frame, *pix)[2]
             if len(approved_pix):
                 main_pix = (x_tot / len(approved_pix), y_tot / len(approved_pix))
+                main_colour = (r_tot/len(approved_pix), g_tot/len(approved_pix), b_tot/len(approved_pix))
             # if the algorithm can't find any pixels to approve, give a warning
             else:
                 print("--Warning: no pixels approved--")
@@ -360,12 +366,7 @@ if __name__ == '__main__':
 
         # if q is pressed, stop the program
         if cv2.waitKey(5) == ord('q'):
-            print(n_frames)
             break
-
-    # ends the program by destroying all windows
-    vid.release()
-    cv2.destroyAllWindows()
 
     # creates the name of the to be saved datasheet
     n = 0
@@ -376,11 +377,25 @@ if __name__ == '__main__':
         if i == '.':
             last_dot = n - 1
 
+    #asks the user if they want to save the file
+    print('----')
+    print('--save the data as csv file?--')
+    print("--press 'y' if yes, press 'n' if no--")
+
+    k = None
+    while not k == ord('n') and not k == ord('y'):
+        k = cv2.waitKey(0) & 0xFF
+
+    # ends the program by destroying all windows
+    vid.release()
+    cv2.destroyAllWindows()
+
     # saves the list of tracked points
-    np.savetxt(
-        vidpath[last_slash:last_dot] + "_motion-track.csv",
-        tracked_points,
-        delimiter=", ",
-        fmt='% s'
-    )
-    print("saved: " + vidpath[last_slash:last_dot] + "_motion-track.csv")
+    if k == ord('y'):
+        np.savetxt(
+            vidpath[last_slash:last_dot] + "_motion-track.csv",
+            tracked_points,
+            delimiter=", ",
+            fmt='% s'
+        )
+        print("saved: " + vidpath[last_slash:last_dot] + "_motion-track.csv")
