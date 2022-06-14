@@ -3,6 +3,5 @@ Start main.py to begin motion tracking. Instructions will be given in the python
 The end result will be saved as an .csv file to this directory.
 
 if you want to quit tracking in the process, press 'q'
-(Note: this does not save the data acquired up to that point)
 
 make sure numpy and opencv are both installed
