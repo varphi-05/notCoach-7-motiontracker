@@ -1,0 +1,21 @@
+patch notes v1.1.1:
+
+  -Tkinter dialog created so the user can browse to a file, instead of having to type/paste in the path to the file.
+  
+  -Added comments to code that applied to 1.1 changes.
+  
+  -Removed the comment at the end regarding the 'task list' I forgot to remove.
+  
+  -Set the minimum for dx, height and width to 1.
+  
+  -Changed the recommended background resolution to 0.3
+
+
+patch notes v1.1:
+
+  -Colour that is tracked does not update if center of object isn't in the required colour range.
+  
+  -Tool added so a rectangle can be chosen within the frame, in which's area the object will be searched.
+    -rectangle's position updates with each frame
+
+  -added python file 'frame_check.py' which includes some definitions for functions
