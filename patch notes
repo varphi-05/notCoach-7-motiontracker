@@ -4,6 +4,7 @@ patch notes v1.1.2:
   
   -Colour to be tracked is now updated by taking an average of all RGB values of the approved pixels.
 
+
 patch notes v1.1.1:
 
   -Tkinter dialog created so the user can browse to a file, instead of having to type/paste in the path to the file.
