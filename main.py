@@ -1,5 +1,6 @@
 # This is a sample Python script.
 import cv2
+from tkinter import filedialog, Tk
 import frame_check as fc
 import numpy as np
 
@@ -58,21 +59,26 @@ if __name__ == '__main__':
     # introduction and video path input'
     print("--Welcome to the notCoach 7 motion tracker--")
     print("----")
-    print("--Copy and paste the path to the video you want to track below--")
-    print("--Example path notation: ")
-    print("--'C:\\Users\\Japie\\path\\notation\\example.mp4'--")
+    print("--Choose the file you want to be tracked--")
 
     if Test:
         vid = cv2.VideoCapture('C:\\Users\\merij\\Desktop\\opencv spul\\blue.mp4')
     else:
-        vidpath = str(input("put path here: "))
+        vidpath = False
+        # creates a small dialog to let the user pick a file
+        while not vidpath:
+            root = Tk()
+            vidpath = filedialog.askopenfilename()
+            root.destroy()
+            if not vidpath:
+                print("warning: no file detected")
         vid = cv2.VideoCapture(vidpath)
 
     # resolution factor input
     print("----")
     print("--Choose the factor by which the standard resolution will be multiplied--")
     print("--so that the program can work faster in the background (or not, if you input 1)--")
-    print("--A factor of 0.1 is recommended--")
+    print("--A factor of 0.3 is recommended, but is different per video--")
     res_fac = float(input("put resolution factor here: "))
 
     frame = True
@@ -103,32 +109,32 @@ if __name__ == '__main__':
         # if so, tracks each pixel to see if it's in the required range
         # then takes an average of the pixels that satisfy and makes it the new pixel colour to track
         if not first_frame:
-            # checks for each pixel on the image if the RGB values are in the required range
-            # if True, adds the checked pixel in range_pix
+            # checks for each pixel on the image, or an area within the image if the RGB values are in the required range
+            # if True, adds the checked pixel in approved_pix
             if not shown_range:
-                # list of approved pixels
-                range_pix = fc.checkframe((0, 0),
-                                          (frame.shape[1], frame.shape[0]),
-                                          frame,
-                                          main_colour,
-                                          dx)
+                approved_pix = fc.checkframe((0, 0),
+                                             (frame.shape[1], frame.shape[0]),
+                                             frame,
+                                             main_colour,
+                                             dx)
 
             if shown_range:
                 cv2.rectangle(shown_frame, shown_range[0], shown_range[1], (0,0,0), 5)
 
                 # list of approved pixels
-                range_pix = fc.checkframe(*calc_range, frame, main_colour, dx)
+                approved_pix = fc.checkframe(*calc_range, frame, main_colour, dx)
             x_tot, y_tot = 0, 0
 
-            # calculates the center of gravity of all points in range_pix
+            # calculates the center of gravity of all points in approved_pix
             # then stores the pixel, and it's colour
-            for pix in range_pix:
+            for pix in approved_pix:
                 x_tot, y_tot = x_tot + pix[0], y_tot + pix[1]
-            if len(range_pix):
-                main_pix = (x_tot / len(range_pix), y_tot / len(range_pix))
-                main_pix_shown = int_convert(main_pix, calc_res, shown_res)
+            if len(approved_pix):
+                main_pix = (x_tot / len(approved_pix), y_tot / len(approved_pix))
+            # if the algorithm can't find any pixels to approve, give a warning
             else:
                 print("--Warning: no pixels approved--")
+            main_pix_shown = int_convert(main_pix, calc_res, shown_res)
 
             # creates the new area to search in if chosen to at the start
             if shown_range:
@@ -137,13 +143,14 @@ if __name__ == '__main__':
                 calc_range = (int_convert(shown_range[0], shown_res, calc_res),
                               int_convert(shown_range[1], shown_res, calc_res))
 
+            # updates the colour to be tracked if the colour of the new main pixel is within the required range
             if fc.checkpixel(main_colour,
                           store_colour(frame, int(main_pix[0]), int(main_pix[1])),
                           dx):
                 main_colour = store_colour(frame, int(main_pix[0]), int(main_pix[1]))
 
-            # colours all pixels in range_pix so that the user can check if anything goes wrong
-            for pix in range_pix:
+            # colours all pixels in approved_pix so that the user can check if anything goes wrong
+            for pix in approved_pix:
                 shown_frame[
                 int_convert(pix, calc_res, shown_res)[1]: int_convert(pix, calc_res, shown_res)[1] + int(
                     1.5 * shown_res[1] / calc_res[1]),
@@ -182,7 +189,7 @@ if __name__ == '__main__':
                 cv2.circle(first_frame, origin, 5, (0, 255, 0), -1)
                 cv2.imshow('video', first_frame)
 
-                cv2.waitKey(500)
+                cv2.waitKey(300)
 
                 # choosing the scale
                 print("----")
@@ -231,12 +238,16 @@ if __name__ == '__main__':
 
                 # creates a slider for the height and width of the rectangle
                 cv2.namedWindow('trackbar')
-                cv2.createTrackbar('height', 'trackbar', 0, int(shown_frame.shape[0]), nothing)
-                cv2.createTrackbar('width', 'trackbar', 0, int(shown_frame.shape[1]), nothing)
+                cv2.createTrackbar('height', 'trackbar', 1, int(shown_frame.shape[0]), nothing)
+                cv2.createTrackbar('width', 'trackbar', 1, int(shown_frame.shape[1]), nothing)
+                cv2.setTrackbarMin('height', 'trackbar', 1)
+                cv2.setTrackbarMin('width', 'trackbar', 1)
 
                 k = None
-                height = 0
-                width = 0
+                height = 1
+                width = 1
+
+                # waits until the user has chosen to skip this part or when the right outlines are chosen
                 while not k == ord('c') and not k == ord('s'):
                     cv2.imshow('video', first_frame)
 
@@ -259,6 +270,10 @@ if __name__ == '__main__':
                                       (0, 0, 0),
                                       5)
                 cv2.destroyWindow('trackbar')
+
+                # if chosen so, an area within the frame occupied by the rectangle will be created by storing two
+                # opposite vertices. In this area the object will be searched later on, to reduce computation time and
+                # filter out objects of the same colour
                 if k == ord('c'):
                     shown_range = ((mouseX - width, mouseY - height),
                                    (mouseX + width, mouseY + height))
@@ -276,11 +291,12 @@ if __name__ == '__main__':
 
                 # creates a slider for dx
                 cv2.namedWindow('trackbar')
-                cv2.createTrackbar('dx', 'trackbar', 0, 255, nothing)
+                cv2.createTrackbar('dx', 'trackbar', 1, 255, nothing)
+                cv2.setTrackbarMin('dx', 'trackbar', 1)
 
                 # lets slider be adjustable until 'c' is pressed
                 k = None
-                dx = 0
+                dx = 1
                 while not k == ord('c'):
                     cv2.imshow('video', first_frame)
 
@@ -296,6 +312,8 @@ if __name__ == '__main__':
 
                         cv2.circle(first_frame, (mouseX, mouseY), 5, (0, 0, 0), 3)
 
+                        # checks the area within the frame chosen earlier, or the whole frame,
+                        # dependant of the user's option earlier on
                         if shown_range:
                             cv2.rectangle(first_frame,
                                           shown_range[0],
@@ -303,22 +321,24 @@ if __name__ == '__main__':
                                           (0, 0, 0),
                                           5)
 
-                            range_pix = fc.checkframe(*calc_range, frame, main_colour, dx)
+                            approved_pix = fc.checkframe(*calc_range, frame, main_colour, dx)
 
                         if not shown_range:
-                            range_pix = fc.checkframe((0, 0),
-                                                      (frame.shape[1], frame.shape[0]),
-                                                      frame,
-                                                      main_colour,
-                                                      dx)
+                            approved_pix = fc.checkframe((0, 0),
+                                                         (frame.shape[1], frame.shape[0]),
+                                                         frame,
+                                                         main_colour,
+                                                         dx)
 
-                        for pix in range_pix:
+                        # colours the approved pixels grey
+                        for pix in approved_pix:
                             first_frame[
                             int_convert(pix, calc_res, shown_res)[1]: int_convert(pix, calc_res, shown_res)[1] + int(
                                 1.5 * shown_res[1] / calc_res[1]),
                             int_convert(pix, calc_res, shown_res)[0]: int_convert(pix, calc_res, shown_res)[0] + int(
                                 1.5 * shown_res[0] / calc_res[0])
                             ] = (100, 100, 100)
+                cv2.destroyWindow('trackbar')
 
                 # ask if the user wants to redo the data inputs
                 print("----")
@@ -330,7 +350,6 @@ if __name__ == '__main__':
                 while not k == ord('c') and not k == ord('r'):
                     k = cv2.waitKey(10) & 0xFF
 
-                cv2.destroyWindow('trackbar')
                 first_frame = False
 
         # prints and stores the point that is tracked
@@ -352,7 +371,7 @@ if __name__ == '__main__':
     n = 0
     for i in vidpath:
         n += 1
-        if i == '\\':
+        if i == '/':
             last_slash = n
         if i == '.':
             last_dot = n - 1
@@ -365,8 +384,3 @@ if __name__ == '__main__':
         fmt='% s'
     )
     print("saved: " + vidpath[last_slash:last_dot] + "_motion-track.csv")
-
-# task list:
-#   -finish taskbar for dx
-#   -get qt
-#   -add rectangle to limit amount of checked pixels
