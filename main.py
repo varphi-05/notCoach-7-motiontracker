@@ -149,12 +149,6 @@ if __name__ == '__main__':
                 calc_range = (int_convert(shown_range[0], shown_res, calc_res),
                               int_convert(shown_range[1], shown_res, calc_res))
 
-            # updates the colour to be tracked if the colour of the new main pixel is within the required range
-            if fc.checkpixel(main_colour,
-                          store_colour(frame, int(main_pix[0]), int(main_pix[1])),
-                          dx):
-                main_colour = store_colour(frame, int(main_pix[0]), int(main_pix[1]))
-
             # colours all pixels in approved_pix so that the user can check if anything goes wrong
             for pix in approved_pix:
                 shown_frame[
