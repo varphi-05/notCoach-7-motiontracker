@@ -1,3 +1,9 @@
+patch notes v1.1.2:
+
+  -Added a feature so the user will be asked if he wants to save the data as a csv file or not.
+  
+  -Colour to be tracked is now updated by taking an average of all RGB values of the approved pixels.
+
 patch notes v1.1.1:
 
   -Tkinter dialog created so the user can browse to a file, instead of having to type/paste in the path to the file.
